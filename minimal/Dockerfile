@@ -1,4 +1,4 @@
-FROM ubuntu:22.04
+FROM ubuntu
 
 RUN apt-get update && apt-get install -y curl git
 RUN curl -fsSL https://claude.ai/install.sh | bash
