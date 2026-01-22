@@ -18,12 +18,14 @@ ENV DEBIAN_FRONTEND=noninteractive
 # Update and install essential packages
 RUN apt-get update && apt-get install -y \
     build-essential \
+    cmake \
     curl \
     git \
     wget \
     libssl-dev \
     libreadline-dev \
     zlib1g-dev \
+    libpq-dev \
     libyaml-dev \
     libxml2-dev \
     libxslt1-dev \
@@ -32,6 +34,7 @@ RUN apt-get update && apt-get install -y \
     libffi-dev \
     nodejs \
     npm \
+    pkg-config \
     postgresql \
     postgresql-contrib \
     redis-server \
