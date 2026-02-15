@@ -84,6 +84,14 @@ RUN sed -i 's/local   all             postgres                                pe
 ENV DEBIAN_FRONTEND=dialog
 
 RUN mkdir -p /root/.claude
+
+RUN cat > /root/.claude.json << EOF
+{
+  "hasCompletedOnboarding": true,
+  "theme": "dark"
+}
+EOF
+
 RUN cat <<EOT >> /root/.claude/CLAUDE.md
 - This is SANDBOX environment, where you have multiple tools pre-installed.
 - You can start postgres by running: \`service postgresql start\`

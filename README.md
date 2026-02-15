@@ -2,6 +2,10 @@
 
 Docker image for running [Claude Code](https://claude.ai/code) in an Ubuntu container.
 
+The image comes pre-configured with `~/.claude.json` settings:
+- Onboarding completed
+- Dark theme enabled
+
 ## Usage
 
 ### Basic usage
