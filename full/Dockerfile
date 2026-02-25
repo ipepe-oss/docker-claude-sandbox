@@ -88,7 +88,11 @@ RUN mkdir -p /root/.claude
 RUN cat > /root/.claude.json << EOF
 {
   "hasCompletedOnboarding": true,
-  "theme": "dark"
+  "theme": "dark",
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  }
 }
 EOF
 
@@ -116,6 +120,8 @@ RUN mkdir -p /root/.config/claude && \
     service postgresql stop && \
     service redis-server stop
 
+
+RUN claude mcp add playwright npx @playwright/mcp@latest
 
 # Create entrypoint script
 RUN echo '#!/bin/bash' > /entrypoint.sh && \
