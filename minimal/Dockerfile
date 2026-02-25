@@ -5,10 +5,14 @@ RUN curl -fsSL https://claude.ai/install.sh | bash
 RUN echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ENV IS_SANDBOX=1
 
-RUN cat > ~/.claude.json << EOF
+RUN cat > /root/.claude.json << EOF
 {
   "hasCompletedOnboarding": true,
-  "theme": "dark"
+  "theme": "dark",
+  "attribution": {
+    "commit": "",
+    "pr": ""
+  }
 }
 EOF
 
