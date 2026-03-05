@@ -1,9 +1,16 @@
+# Build gotty from source
+FROM golang:1.23 AS gotty-builder
+RUN git clone https://github.com/sorenisanerd/gotty.git /gotty && \
+    cd /gotty && \
+    CGO_ENABLED=0 go build -o /gotty-bin .
+
 FROM ubuntu:22.04
 
 RUN apt-get update && apt-get install -y curl git && \
     curl -fsSL https://claude.ai/install.sh | bash && \
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ENV IS_SANDBOX=1
+ENV PATH="/root/.local/bin:${PATH}"
 
 RUN mkdir /src
 WORKDIR /src
@@ -20,6 +27,7 @@ RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
     curl \
+    dtach \
     git \
     wget \
     libssl-dev \
@@ -39,6 +47,7 @@ RUN apt-get update && apt-get install -y \
     postgresql-contrib \
     redis-server \
     sudo \
+    tmux \
     && rm -rf /var/lib/apt/lists/*
 
 # Install rbenv and ruby-build
@@ -70,6 +79,19 @@ RUN NODE_VERSION=$(nodenv install -l | grep "^${NODE_MAJOR_VERSION}\." | tail -1
 
 # Install ccusage
 RUN npm install -g ccusage && nodenv rehash
+
+# Install gotty
+COPY --from=gotty-builder /gotty-bin /usr/local/bin/gotty
+
+RUN echo "permit-write = true" >> ~/.gotty && \
+    echo "reconnect = true" >> ~/.gotty
+
+# Install Chromium and ChromeDriver from Debian bookworm (Ubuntu 22.04 only has snap packages which don't work in Docker)
+RUN echo "deb [trusted=yes] http://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/debian-bookworm.list && \
+    apt-get update && \
+    apt-get install -y -t bookworm chromium chromium-driver && \
+    rm /etc/apt/sources.list.d/debian-bookworm.list && \
+    rm -rf /var/lib/apt/lists/*
 
 # Install Playwright for MCP support
 RUN npm install -g playwright && nodenv rehash && \
@@ -106,6 +128,8 @@ RUN cat <<EOT >> /root/.claude/CLAUDE.md
 - You can use 'ccusage' command to check resource usage.
 EOT
 
+RUN echo "cat /root/.claude/CLAUDE.md" >> /root/.bashrc
+
 # Create dummy config for ccusage and test all needed commands
 RUN mkdir -p /root/.config/claude && \
     touch /root/.config/claude/config.json && \
@@ -115,6 +139,9 @@ RUN mkdir -p /root/.config/claude && \
     psql --version && \
     redis-server --version && \
     npx playwright --version && \
+    chromium --version && \
+    chromedriver --version && \
+    gotty --version && \
     service postgresql start && \
     service redis-server start && \
     service postgresql stop && \
@@ -124,10 +151,9 @@ RUN mkdir -p /root/.config/claude && \
 RUN claude mcp add playwright npx @playwright/mcp@latest
 
 # Create entrypoint script
-RUN echo '#!/bin/bash' > /entrypoint.sh && \
-    echo 'cat /root/.claude/CLAUDE.md' >> /entrypoint.sh && \
-    echo 'exec "$@"' >> /entrypoint.sh && \
-    chmod +x /entrypoint.sh
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
+EXPOSE 8080 3000 5432 6379
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["/bin/bash"]
+CMD ["gottyautostart"]
