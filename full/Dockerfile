@@ -4,50 +4,48 @@ RUN git clone https://github.com/sorenisanerd/gotty.git /gotty && \
     cd /gotty && \
     CGO_ENABLED=0 go build -o /gotty-bin .
 
-FROM ubuntu:22.04
+FROM debian:bookworm
 
-RUN apt-get update && apt-get install -y curl git && \
-    curl -fsSL https://claude.ai/install.sh | bash && \
-    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-ENV IS_SANDBOX=1
-ENV PATH="/root/.local/bin:${PATH}"
-
-RUN mkdir /src
-WORKDIR /src
-
-# Build arguments
-ARG NODE_MAJOR_VERSION=22
-
-# Prevent interactive prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
+ENV IS_SANDBOX=1
 
-# Update and install essential packages
 RUN apt-get update && apt-get install -y \
     build-essential \
+    chromium \
+    chromium-driver \
     cmake \
     curl \
     dtach \
     git \
-    wget \
-    libssl-dev \
-    libreadline-dev \
-    zlib1g-dev \
+    libcurl4-openssl-dev \
+    libffi-dev \
     libpq-dev \
-    libyaml-dev \
+    libreadline-dev \
+    libssl-dev \
     libxml2-dev \
     libxslt1-dev \
-    libcurl4-openssl-dev \
-    software-properties-common \
-    libffi-dev \
+    libyaml-dev \
     nodejs \
     npm \
     pkg-config \
     postgresql \
     postgresql-contrib \
     redis-server \
+    software-properties-common \
     sudo \
     tmux \
+    wget \
+    zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
+
+RUN curl -fsSL https://claude.ai/install.sh | bash && \
+    echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+ENV PATH="/root/.local/bin:${PATH}"
+
+RUN mkdir /src
+WORKDIR /src
+
+ARG NODE_MAJOR_VERSION=22
 
 # Install asdf version manager (v0.16+ is a Go binary, not git clone)
 RUN ARCH=$(uname -m) && \
@@ -77,21 +75,14 @@ COPY --from=gotty-builder /gotty-bin /usr/local/bin/gotty
 RUN echo "permit-write = true" >> ~/.gotty && \
     echo "reconnect = true" >> ~/.gotty
 
-# Install Chromium and ChromeDriver from Debian bookworm (Ubuntu 22.04 only has snap packages which don't work in Docker)
-RUN echo "deb [trusted=yes] http://deb.debian.org/debian bookworm main" > /etc/apt/sources.list.d/debian-bookworm.list && \
-    apt-get update && \
-    apt-get install -y -t bookworm chromium chromium-driver && \
-    rm /etc/apt/sources.list.d/debian-bookworm.list && \
-    rm -rf /var/lib/apt/lists/*
-
 # Install Playwright for MCP support
 RUN npm install -g playwright && asdf reshim nodejs && \
     npx playwright install-deps chromium && \
     npx playwright install chromium
 
 # Configure PostgreSQL to allow service start
-RUN sed -i 's/local   all             postgres                                peer/local   all             postgres                                trust/' /etc/postgresql/14/main/pg_hba.conf && \
-    sed -i 's/local   all             all                                     peer/local   all             all                                     trust/' /etc/postgresql/14/main/pg_hba.conf
+RUN sed -i 's/local   all             postgres                                peer/local   all             postgres                                trust/' /etc/postgresql/15/main/pg_hba.conf && \
+    sed -i 's/local   all             all                                     peer/local   all             all                                     trust/' /etc/postgresql/15/main/pg_hba.conf
 
 # Set up environment
 ENV DEBIAN_FRONTEND=dialog
