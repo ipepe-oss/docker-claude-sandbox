@@ -131,9 +131,24 @@ RUN mkdir -p /root/.config/claude && \
 
 RUN claude mcp add playwright npx @playwright/mcp@latest
 
-# Create entrypoint script
-COPY entrypoint.sh /entrypoint.sh
-RUN chmod +x /entrypoint.sh
+RUN cat <<'ENTRYPOINT_SCRIPT' > /entrypoint.sh && chmod +x /entrypoint.sh
+#!/bin/bash
+
+service postgresql start &
+service redis-server start
+
+wait
+
+service --status-all
+
+asdf install 2>/dev/null || true
+
+if [ "${1}" == "gottyautostart" ]; then
+  gotty tmux new -A -s gotty bash
+fi
+
+exec "${@}"
+ENTRYPOINT_SCRIPT
 
 EXPOSE 8080 3000 5432 6379
 ENTRYPOINT ["/entrypoint.sh"]

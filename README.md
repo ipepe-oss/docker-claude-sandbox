@@ -1,6 +1,6 @@
 # ubuntu-claude
 
-Docker image for running [Claude Code](https://claude.ai/code) in an Ubuntu container.
+Docker image for running [Claude Code](https://claude.ai/code) in an Docker container.
 
 The image comes pre-configured with `~/.claude.json` settings:
 - Onboarding completed
@@ -13,19 +13,19 @@ The image comes pre-configured with `~/.claude.json` settings:
 Run the container with your current directory mounted to `/src`:
 
 ```bash
-docker run -it -v $(pwd):/src ipepe/ubuntu-claude
+docker run -it -v $(pwd):/src ipepe/claude-sandbox
 ```
 
 ### Fish shell
 
 ```fish
-docker run -it -v (pwd):/src ipepe/ubuntu-claude
+docker run -it -v (pwd):/src ipepe/claude-sandbox
 ```
 
 ### With custom working directory
 
 ```bash
-docker run -it -v /path/to/project:/src ipepe/ubuntu-claude
+docker run -it -v /path/to/project:/src ipepe/claude-sandbox
 ```
 
 ### Interactive shell
