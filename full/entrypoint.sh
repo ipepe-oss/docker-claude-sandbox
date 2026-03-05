@@ -7,7 +7,7 @@ wait
 
 service --status-all
 
-# TODO: `asdf install` when we move from rbenv to asdf
+asdf install 2>/dev/null || true
 
 if [ "${1}" == "gottyautostart" ]; then
   gotty tmux new -A -s gotty bash

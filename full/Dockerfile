@@ -16,7 +16,6 @@ RUN mkdir /src
 WORKDIR /src
 
 # Build arguments
-ARG RUBY_VERSION=3.4.8
 ARG NODE_MAJOR_VERSION=22
 
 # Prevent interactive prompts during package installation
@@ -50,35 +49,27 @@ RUN apt-get update && apt-get install -y \
     tmux \
     && rm -rf /var/lib/apt/lists/*
 
-# Install rbenv and ruby-build
-RUN git clone https://github.com/rbenv/rbenv.git ~/.rbenv && \
-    echo 'export PATH="$HOME/.rbenv/bin:$PATH"' >> ~/.bashrc && \
-    echo 'eval "$(rbenv init -)"' >> ~/.bashrc && \
-    git clone https://github.com/rbenv/ruby-build.git ~/.rbenv/plugins/ruby-build && \
-    echo 'export PATH="$HOME/.rbenv/plugins/ruby-build/bin:$PATH"' >> ~/.bashrc
+# Install asdf version manager (v0.16+ is a Go binary, not git clone)
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then ARCH="amd64"; elif [ "$ARCH" = "aarch64" ]; then ARCH="arm64"; fi && \
+    mkdir -p ~/.asdf/bin && \
+    curl -sSfL https://github.com/asdf-vm/asdf/releases/download/v0.16.7/asdf-v0.16.7-linux-${ARCH}.tar.gz | tar xz -C ~/.asdf/bin && \
+    echo 'export PATH="$HOME/.asdf/bin:$HOME/.asdf/shims:$PATH"' >> ~/.bashrc
 
-# Install Ruby using rbenv with the version from build argument
-ENV PATH="/root/.rbenv/bin:/root/.rbenv/shims:${PATH}"
-RUN rbenv install ${RUBY_VERSION} && \
-    rbenv global ${RUBY_VERSION} && \
-    rbenv rehash
+ENV PATH="/root/.asdf/bin:/root/.asdf/shims:${PATH}"
 
-# Install nodenv and node-build
-RUN git clone https://github.com/nodenv/nodenv.git ~/.nodenv && \
-    echo 'export PATH="$HOME/.nodenv/bin:$PATH"' >> ~/.bashrc && \
-    echo 'eval "$(nodenv init -)"' >> ~/.bashrc && \
-    git clone https://github.com/nodenv/node-build.git ~/.nodenv/plugins/node-build && \
-    echo 'export PATH="$HOME/.nodenv/plugins/node-build/bin:$PATH"' >> ~/.bashrc
+RUN echo 'legacy_version_file = yes' > ~/.asdfrc
 
-# Install Node.js using nodenv with major version from build argument
-ENV PATH="/root/.nodenv/bin:/root/.nodenv/shims:${PATH}"
-RUN NODE_VERSION=$(nodenv install -l | grep "^${NODE_MAJOR_VERSION}\." | tail -1) && \
-    nodenv install ${NODE_VERSION} && \
-    nodenv global ${NODE_VERSION} && \
-    nodenv rehash
+# Install Node.js via asdf
+RUN asdf plugin add nodejs && \
+    asdf install nodejs latest:${NODE_MAJOR_VERSION} && \
+    asdf set --home nodejs latest:${NODE_MAJOR_VERSION}
+
+# Add ruby plugin (no ruby version installed by default)
+RUN asdf plugin add ruby
 
 # Install ccusage
-RUN npm install -g ccusage && nodenv rehash
+RUN npm install -g ccusage && asdf reshim nodejs
 
 # Install gotty
 COPY --from=gotty-builder /gotty-bin /usr/local/bin/gotty
@@ -94,7 +85,7 @@ RUN echo "deb [trusted=yes] http://deb.debian.org/debian bookworm main" > /etc/a
     rm -rf /var/lib/apt/lists/*
 
 # Install Playwright for MCP support
-RUN npm install -g playwright && nodenv rehash && \
+RUN npm install -g playwright && asdf reshim nodejs && \
     npx playwright install-deps chromium && \
     npx playwright install chromium
 
@@ -122,8 +113,8 @@ RUN cat <<EOT >> /root/.claude/CLAUDE.md
 - This is SANDBOX environment, where you have multiple tools pre-installed.
 - You can start postgres by running: \`service postgresql start\`
 - You can start redis server by running: \`service redis-server start\`
-- Ruby version installed: ${RUBY_VERSION} using `rbenv`
-- Node.js major version installed: ${NODE_MAJOR_VERSION} is installed using `nodenv`
+- Node.js major version installed: ${NODE_MAJOR_VERSION} using \`asdf\`
+- Ruby plugin is available via asdf (\`asdf install ruby <version>\`)
 - Playwright is installed for browser automation MCP
 - You can use 'ccusage' command to check resource usage.
 EOT
@@ -134,7 +125,6 @@ RUN echo "cat /root/.claude/CLAUDE.md" >> /root/.bashrc
 RUN mkdir -p /root/.config/claude && \
     touch /root/.config/claude/config.json && \
     ccusage --version && \
-    ruby --version && \
     node --version && \
     psql --version && \
     redis-server --version && \
