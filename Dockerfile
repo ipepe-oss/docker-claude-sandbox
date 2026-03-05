@@ -30,6 +30,7 @@ RUN apt-get update && apt-get install -y \
     pkg-config \
     postgresql \
     postgresql-contrib \
+    postgresql-15-postgis-3 \
     redis-server \
     software-properties-common \
     sudo \
