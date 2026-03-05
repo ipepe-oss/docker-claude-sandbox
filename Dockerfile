@@ -72,9 +72,6 @@ RUN npm install -g ccusage && asdf reshim nodejs
 # Install gotty
 COPY --from=gotty-builder /gotty-bin /usr/local/bin/gotty
 
-RUN echo "permit-write = true" >> ~/.gotty && \
-    echo "reconnect = true" >> ~/.gotty
-
 # Install Playwright for MCP support
 RUN npm install -g playwright && asdf reshim nodejs && \
     npx playwright install-deps chromium && \
@@ -144,7 +141,7 @@ service --status-all
 asdf install 2>/dev/null || true
 
 if [ "${1}" == "gottyautostart" ]; then
-  gotty tmux new -A -s gotty bash
+  gotty -w --reconnect tmux new -A -s gotty bash
 fi
 
 exec "${@}"
