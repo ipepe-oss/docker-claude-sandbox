@@ -79,7 +79,10 @@ RUN npm install -g playwright && asdf reshim nodejs && \
 
 # Configure PostgreSQL to allow service start
 RUN sed -i 's/local   all             postgres                                peer/local   all             postgres                                trust/' /etc/postgresql/15/main/pg_hba.conf && \
-    sed -i 's/local   all             all                                     peer/local   all             all                                     trust/' /etc/postgresql/15/main/pg_hba.conf
+    sed -i 's/local   all             all                                     peer/local   all             all                                     trust/' /etc/postgresql/15/main/pg_hba.conf && \
+    sed -i 's|host    all             all             127.0.0.1/32            scram-sha-256|host    all             all             127.0.0.1/32            trust|' /etc/postgresql/15/main/pg_hba.conf && \
+    sed -i 's|host    all             all             ::1/128                 scram-sha-256|host    all             all             ::1/128                 trust|' /etc/postgresql/15/main/pg_hba.conf && \
+    echo "listen_addresses = 'localhost'" >> /etc/postgresql/15/main/postgresql.conf
 
 # Set up environment
 ENV DEBIAN_FRONTEND=dialog
