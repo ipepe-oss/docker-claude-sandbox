@@ -85,6 +85,8 @@ RUN sed -i 's/local   all             postgres                                pe
 # Set up environment
 ENV DEBIAN_FRONTEND=dialog
 
+RUN echo 'set -g mouse on' >> /root/.tmux.conf
+
 RUN mkdir -p /root/.claude
 
 RUN cat > /root/.claude.json << EOF
