@@ -1,9 +1,3 @@
-# Build gotty from source
-FROM golang:1.23 AS gotty-builder
-RUN git clone https://github.com/sorenisanerd/gotty.git /gotty && \
-    cd /gotty && \
-    CGO_ENABLED=0 go build -o /gotty-bin .
-
 FROM debian:bookworm
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -39,6 +33,12 @@ RUN apt-get update && apt-get install -y \
     zlib1g-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Install ttyd from GitHub releases
+RUN ARCH=$(uname -m) && \
+    if [ "$ARCH" = "x86_64" ]; then TTYD_ARCH="x86_64"; elif [ "$ARCH" = "aarch64" ]; then TTYD_ARCH="aarch64"; fi && \
+    curl -fsSL "https://github.com/tsl0922/ttyd/releases/latest/download/ttyd.${TTYD_ARCH}" -o /usr/local/bin/ttyd && \
+    chmod +x /usr/local/bin/ttyd
+
 RUN curl -fsSL https://claude.ai/install.sh | bash && \
     echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
 ENV PATH="/root/.local/bin:${PATH}"
@@ -69,9 +69,6 @@ RUN asdf plugin add ruby
 
 # Install ccusage
 RUN npm install -g ccusage && asdf reshim nodejs
-
-# Install gotty
-COPY --from=gotty-builder /gotty-bin /usr/local/bin/gotty
 
 # Install Playwright for MCP support
 RUN npm install -g playwright && asdf reshim nodejs && \
@@ -123,7 +120,7 @@ RUN mkdir -p /root/.config/claude && \
     npx playwright --version && \
     chromium --version && \
     chromedriver --version && \
-    gotty --version && \
+    ttyd --version && \
     service postgresql start && \
     service redis-server start && \
     service postgresql stop && \
@@ -142,10 +139,10 @@ wait
 
 service --status-all
 
-asdf install 2>/dev/null || true
+asdf install &
 
-if [ "${1}" == "gottyautostart" ]; then
-  gotty -w --reconnect tmux new -A -s gotty bash
+if [ "${1}" == "ttydautostart" ]; then
+  ttyd -W tmux new -A -s main bash
 fi
 
 exec "${@}"
@@ -153,4 +150,4 @@ ENTRYPOINT_SCRIPT
 
 EXPOSE 8080 3000 5432 6379
 ENTRYPOINT ["/entrypoint.sh"]
-CMD ["gottyautostart"]
+CMD ["ttydautostart"]
