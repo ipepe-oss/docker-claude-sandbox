@@ -22,6 +22,7 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     npm \
     pkg-config \
+    poppler-utils \
     postgresql \
     postgresql-contrib \
     postgresql-15-postgis-3 \

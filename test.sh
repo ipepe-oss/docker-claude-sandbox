@@ -20,3 +20,5 @@ docker exec -i ubuntu-claude-full-test bash -c "bundle install"
 docker exec -i ubuntu-claude-full-test bash -c "bundle exec rails db:create db:migrate"
 docker exec -i ubuntu-claude-full-test bash -c "bundle exec rails test"
 
+docker stop ubuntu-claude-full-test || true
+docker rm ubuntu-claude-full-test || true
