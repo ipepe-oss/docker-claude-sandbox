@@ -8,7 +8,7 @@ docker rm ubuntu-claude-full-test || true
 docker build . -t ipepe/ubuntu-claude:full-test
 
 # docker run, detach, map port 7681 to 7681, and name the container "ubuntu-claude-full-test"
-docker run -d -p 7682:7681 --name ubuntu-claude-full-test ipepe/ubuntu-claude:full-test
+docker run -d -p 7683:7681 --name ubuntu-claude-full-test ipepe/ubuntu-claude:full-test
 
 docker exec -i ubuntu-claude-full-test bash -c "service --status-all"
 

@@ -145,10 +145,11 @@ service --status-all
 asdf install &
 
 if [ "${1}" == "ttydautostart" ]; then
-  ttyd -W tmux new -A -s main bash
+  tmux new-session -d -s main bash
+  exec ttyd -W tmux attach -t main
+else
+  exec "${@}"
 fi
-
-exec "${@}"
 ENTRYPOINT_SCRIPT
 
 EXPOSE 8080 3000 5432 6379
