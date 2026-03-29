@@ -67,6 +67,7 @@ RUN asdf plugin add nodejs && \
 
 # Add ruby plugin (no ruby version installed by default)
 RUN asdf plugin add ruby
+RUN asdf plugin add crystal
 
 # Install ccusage
 RUN npm install -g ccusage && asdf reshim nodejs
@@ -108,7 +109,6 @@ RUN cat <<EOT >> /root/.claude/CLAUDE.md
 - Node.js major version installed: ${NODE_MAJOR_VERSION} using \`asdf\`
 - Ruby plugin is available via asdf (\`asdf install ruby <version>\`)
 - Playwright is installed for browser automation MCP
-- You can use 'ccusage' command to check resource usage.
 EOT
 
 RUN echo "cat /root/.claude/CLAUDE.md" >> /root/.bashrc
@@ -135,23 +135,21 @@ RUN claude mcp add playwright npx @playwright/mcp@latest
 RUN cat <<'ENTRYPOINT_SCRIPT' > /entrypoint.sh && chmod +x /entrypoint.sh
 #!/bin/bash
 
-service postgresql start &
-service redis-server start
-
 wait
 
 service --status-all
 
+echo 'set -g mouse on' >> /root/.tmux.conf
+
 asdf install &
 
 if [ "${1}" == "ttydautostart" ]; then
-  tmux new-session -d -s main bash
-  exec ttyd -W tmux attach -t main
+  exec ttyd -W tmux new -A -s main bash
 else
   exec "${@}"
 fi
 ENTRYPOINT_SCRIPT
 
-EXPOSE 8080 3000 5432 6379
+EXPOSE 3000 7681
 ENTRYPOINT ["/entrypoint.sh"]
 CMD ["ttydautostart"]

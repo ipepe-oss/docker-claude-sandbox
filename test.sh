@@ -12,6 +12,9 @@ docker run -d -p 7683:7681 --name ubuntu-claude-full-test ipepe/ubuntu-claude:fu
 
 docker exec -i ubuntu-claude-full-test bash -c "service --status-all"
 
+echo "/root/.tmux.conf is:"
+docker exec -i ubuntu-claude-full-test bash -c "cat /root/.tmux.conf"
+
 docker exec -i ubuntu-claude-full-test bash -c "claude --version"
 docker exec -i ubuntu-claude-full-test bash -c "git clone https://github.com/basecamp/fizzy.git ."
 docker exec -i ubuntu-claude-full-test bash -c "asdf install"
