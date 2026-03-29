@@ -87,7 +87,7 @@ RUN sed -i 's/local   all             postgres                                pe
 # Set up environment
 ENV DEBIAN_FRONTEND=dialog
 
-RUN echo 'set -g mouse on' >> /root/.tmux.conf
+RUN echo 'set -g mouse on' > /root/.tmux.conf
 
 RUN mkdir -p /root/.claude
 
@@ -139,7 +139,7 @@ wait
 
 service --status-all
 
-echo 'set -g mouse on' >> /root/.tmux.conf
+echo 'set -g mouse on' > /root/.tmux.conf
 
 asdf install &
 
